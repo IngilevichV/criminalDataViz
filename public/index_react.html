@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>React Local</title>
+    <script type="application/javascript" src="https://unpkg.com/react@16.0.0/umd/react.production.min.js"></script>
+    <script type="application/javascript" src="https://unpkg.com/react-dom@16.0.0/umd/react-dom.production.min.js"></script>
+    <script type="application/javascript" src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+    <script type="application/javascript" src="https://unpkg.com/react-transition-group@2.5.0/dist/react-transition-group.js"></script>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://d3js.org/topojson.v1.min.js"></script>
+    <style>
+        .App {
+            text-align: center;
+        }
+
+        .App-logo {
+            animation: App-logo-spin infinite 20s linear;
+            height: 40vmin;
+        }
+
+        .App-header {
+            background-color: #282c34;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(10px + 2vmin);
+            color: white;
+        }
+
+        .App-link {
+            color: #61dafb;
+        }
+
+        @keyframes App-logo-spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+
+        .tooltip {
+            position:absolute;
+            min-width: 80px;
+            background: none repeat scroll 0 0 #b3eaf3;
+            padding: 5px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 12px;
+            font-family: Verdana, Geneva, sans-serif;
+            background: #deefee;
+            left: 50%;
+            top: 50%;
+        }
+
+        #id_map {
+            width: 45%;
+            float: left;
+        }
+
+        #id_barChart {
+            width: 45%;
+            float: right;
+        }
+
+        #heatMap {
+            width: 45%;
+            float: right;
+        }
+
+        .legend rect:hover {
+            fill: red;
+        }
+
+        #lineChart {
+            width: 45%;
+            float: left;
+        }
+
+        rect.bordered {
+            stroke: white;
+            stroke-width:2px;
+        }
+        text.mono {
+            font-size: 9pt;
+            font-family: Consolas, courier;
+            fill: #aaa;
+        }
+        text.axis-workweek {
+            fill: #000;
+        }
+        text.axis-worktime {
+            fill: #000;
+        }
+
+
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 2px;
+        }
+        .domain {
+            stroke:black;
+        }
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+        .tip circle {
+            fill: #66bddd;
+            stroke: #4d88d6;
+            stroke-width: 5px;
+        }
+
+        .hover-line {
+            stroke: #5682d3;
+            stroke-width: 0.5px;
+            stroke-dasharray: 3,3;
+        }
+        #line_graph_div {
+            display:block;
+            width: 100%;
+            height:200px;
+            margin-top:0px;
+        }
+        .line_graph_wrapper {
+            float: left!important;
+            /*display: block;*/
+            margin-top: 30px;
+            width: 47%;
+            height: 300px;
+            left: 0px;
+            clear: left;
+        }
+        .lg_span {
+            width: 530px;
+            margin-left: 60px;
+            height: 30px;
+        }
+        /*page*/
+        .image {
+            margin-top: 20px;
+            display: inline-block;
+            width: 110px;
+            vertical-align: middle;
+        }
+        .title {
+            font-family: "Arial Black", Gadget, sans-serif;
+            display:table-cell;
+            vertical-align:top;
+            margin-left: 20px;
+        }
+        .spans {
+            display:inline-block;
+            vertical-align: top;
+            margin-top: 17px;
+            margin-left: 10px;
+        }
+        img {
+            margin-right: 20px;
+        }
+        .help {
+            font-size: 12px;
+            color: gray;
+            display: block;
+            margin-bottom: 20px;
+            margin-left: 30px;
+        }
+        .button {
+            display: inline-block;
+            vertical-align: center;
+            margin-left: 30px;
+            margin-top: 18px;
+        }
+        .select_option {
+            -webkit-appearance: none;
+        }
+        select {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 3px;
+        }
+        form p {
+            display:block;
+            -webkit-margin-before: 0;
+            -webkit-margin-after: 0;
+            margin-bottom: 3px;
+        }
+        .button_cluster {
+            display: inline-block;
+            margin-left: 25px;
+        }
+        input[type='button'] {
+            -webkit-appearance: none;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            color: black;
+            padding: 5px;
+            padding-left: 7px;
+            padding-right: 7px;
+            text-decoration: none;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        .horizontal_bc_svg .tick line {
+            stroke-dasharray: 3.3;
+            stroke-width: 0.3px;
+            stroke: lightblue;
+        }
+
+
+    </style>
+
+</head>
+
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+    // Obtain the root
+    const rootElement = document.getElementById('root');
+
+    // Create a ES6 class component
+    class App extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                chart_width: document.body.clientWidth
+            };
+            this.updateDimensions = this.updateDimensions.bind(this);
+        }
+
+        componentDidMount() {
+            window.addEventListener("resize", this.updateDimensions.bind(this));
+        }
+
+        updateDimensions() {
+            this.setState({ chart_width: document.body.clientWidth});
+        }
+
+        componentWillUnmount() {
+            window.removeEventListener("resize", this.updateDimensions.bind(this));
+        }
+
+        render() {
+            return (
+                <div className="main_page_wrapper">
+                    <div id="id_map">
+                        <MapComponent width={this.state.chart_width/2} height={500}/>
+                        <div className="tooltipMap" style={{display: "none"}}/>
+                    </div>
+                    <div id="id_barChart">
+                        <BarChart width={this.state.chart_width/2} height={500}/>
+                        <div className="tooltip" style={{display: "none"}}/>
+                    </div>
+
+                    <div id="lineChart">
+                        <LineChart/>
+                    </div>
+                    <div id="heatMap">
+                        <HeatMap/>
+                        <div className="tooltip" style={{display: "none"}}/>
+                    </div>
+
+                </div>
+
+            );
+        }
+    }
+
+
+
+    class Bar extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                x: null,
+                y: null,
+                height: 30,
+                width: null,
+                fillOpacity: 1,
+                className: "enter",
+                fill: '#1e5599',
+                mouseX: 0,
+                mouseY: 0
+            };
+            this.mouseOverHandle = this.mouseOverHandle.bind(this);
+        }
+
+        transition = d3.transition()
+            .duration(750)
+            .ease(d3.easeCubicInOut);
+
+        componentWillEnter(callback) {
+            console.log('willenter')
+            // start enter transition, then callback()
+            let node = d3.select(ReactDOM.findDOMNode(this));
+            this.setState({x: this.props.x});
+            this.setState({y: this.props.y});
+            this.setState({width: this.props.width});
+            this.setState({height: this.props.height});
+            node.transition(this.transition)
+                .attr('y', this.props.y)
+                .attr('width', this.props.width)
+                .attr('height', this.props.height)
+                .style('fill-opacity', 1)
+                .on('end', () => {
+                    this.setState({y: this.props.y, x: this.props.X, width: this.props.width, height: this.props.height, fillOpacity: 1});
+                    callback()
+                });
+        }
+        componentWillLeave(callback) {
+            console.log('lalala')
+            // start exit transition, then callback()
+            let node = d3.select(ReactDOM.findDOMNode(this));
+            this.setState({className: 'exit'});
+
+            node.transition(this.transition)
+                .attr('y', this.props.zeroPozY)
+                .attr('width', this.props.width)
+                .style('fill-opacity', 1)
+                .on('end', () => {
+                    this.setState({x: this.props.X, y: this.props.y, width: this.props.width, fillOpacity: 1});
+                    callback()
+                });
+        }
+        componentWillReceiveProps(nextProps) {
+            if (this.props.i !== nextProps.i) {
+                let node = d3.select(ReactDOM.findDOMNode(this));
+
+                this.setState({className: 'update'});
+                node.transition(this.transition)
+                    .attr('y', this.props.y)
+                    .attr('width', this.props.width)
+                    .on('end', () => this.setState({y: this.props.y, width: this.props.width}));
+            }
+        }
+        mouseOverHandle(){
+            d3.select('.tooltip')
+                .style("left", this.state.mouseX - 30 + "px")
+                .style("top", this.state.mouseY - 80 + "px")
+                .style("display", "inline-block")
+                .html((this.props.d.type) + "<br>"  + (this.props.d.value));
+        }
+        mouseLeaveHandle(){
+            d3.select('.tooltip')
+                .style("display", "none");
+        }
+        _onMouseMove(e) {
+            this.setState({ mouseX: e.screenX, mouseY: e.screenY });
+            d3.select('.tooltip')
+                .style("left", this.state.mouseX - 30 + "px")
+                .style("top", this.state.mouseY - 80 + "px")
+                .style("display", "inline-block")
+                .html((this.props.d.type) + "<br>"  + (this.props.d.value));
+        };
+
+        render() {
+            return(
+
+                    <rect
+                        onMouseEnter={this.mouseOverHandle}
+                        onMouseMove={this._onMouseMove.bind(this)}
+                        onMouseLeave={this.mouseLeaveHandle.bind(this)}
+                        y={this.props.y}
+                        x={this.props.x}
+                        height={this.props.height}
+                        width={this.props.width}
+                        className={this.state.className}
+                        style={{fillOpacity: this.state.fillOpacity, fill: this.state.fill}}/>
+
+            )
+        }
+    }
+
+
+
+
+    class BarChart extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                robbery_types_city: null,
+                robbery_types_areas: null,
+                data: null
+            };
+            this.createBarChart = this.createBarChart.bind(this);
+        }
+
+        componentWillMount(){
+            d3.queue()
+                .defer(d3.json, './data/robbery_types_city.json')
+                .defer(d3.json, './data/robbery_types_areas.json')
+                .await((error, robbery_types_city, robbery_types_areas) => {
+                    let data = robbery_types_city.sort(function(a, b) { return a.value - b.value; });
+                    this.setState({
+                        robbery_types_city: robbery_types_city,
+                        robbery_types_areas: robbery_types_areas,
+                        data: data
+                    });
+                    this.createBarChart();
+                })
+        }
+
+
+        createBarChart() {
+            const margin = {top: 20, right: 20, bottom: 30, left: 350},
+                width = this.props.width - margin.left - margin.right,
+                height = this.props.height - margin.top - margin.bottom;
+
+            let x = d3.scaleLinear().range([0, width]);
+            let y = d3.scaleBand().range([height, 0]);
+            if(this.state.data) {
+                x.domain([0, d3.max(this.state.data, function(d) { return d.value; })]);
+                y.domain(this.state.data.map(function(d) { return d.type; }))
+                    .paddingInner(0.1);
+                if(this.refs.y) {
+                    let g = d3.select(this.refs.y);
+                    g.attr("class", "y_axis_bc")
+                        .style('opacity', 1)
+                        .call(d3.axisLeft(y));
+                }
+            }
+
+
+        }
+
+        render () {
+            const { robbery_types_city, robbery_types_areas, data} = this.state;
+            if(data) {
+                const margin = {top: 20, right: 20, bottom: 30, left: 350},
+                    width = this.props.width - margin.left - margin.right,
+                    height = this.props.height - margin.top - margin.bottom;
+
+                let x = d3.scaleLinear().range([0, width]);
+                let y = d3.scaleBand().range([height, 0]);
+
+                x.domain([0, d3.max(data, function(d) { return d.value; })]);
+                y.domain(data.map(function(d) { return d.type; }))
+                    .paddingInner(0.1);
+
+
+                if (!robbery_types_city || !robbery_types_areas ) {
+                    return null;
+                }
+                return (
+                    <svg width = {this.props.width-150} height={this.props.height}>
+                        <g className='barChart' transform={"translate(" + margin.left + "," + margin.top + ")"} ref="anchor">
+                            {data.map((d, i) => (
+                                <Bar i={i} key={`key-${i}`} x={0} y={y(d.type)} width={x(d.value)} height={y.bandwidth()-1} zeroPozY={y(0)}
+                                     zeroPosWidth={x(0)} d = {d}/>
+                            ))}
+                        </g>
+                        <g ref="y" transform={"translate(" + margin.left + "," + margin.top + ")"}/>
+                    </svg>
+                );
+            } else {
+                return null;
+            }
+
+        }
+
+    }
+
+
+
+    class MapLegend extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                legendDomain: [0, 2364, 4041, 5150, 6873, 8437, 9025, 10640, 11569, 12602, 13998, 15734],
+                legendLabels: ["< 170", "2300+", "4000+", "5000+", "6000+", "8000+", "9000+", "10000+", "11000+", "12000+", "13000+", "> 15000"]
+            };
+        }
+
+        render() {
+            let legendWidth = 20, legendHeight = 20;
+            const LegendCard = this.state.legendDomain.map( (elem, i) =>
+                {
+                    return (
+                        <g className="legend" key={i}>
+                            <rect x={20} y={((i)*legendHeight) + 5*legendHeight+i*4} width={legendWidth} height={legendHeight} style={{fill: this.props.color(elem), opacity: 0.8}}
+                                  rx={4} ry={4}/>
+                            <text x={50} y={((i)*legendHeight) + 5.9*legendHeight + i*3.8}>
+                                {this.state.legendLabels[i]}
+                            </text>
+                        </g>
+                    )
+                }
+            );
+
+            return(
+                <g>{LegendCard}</g>
+            )
+        }
+    }
+
+
+
+
+
+
+
+
+    class HeatMap extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                data: null,
+                mouseX: 0,
+                mouseY: 0
+            };
+            this.mouseEnterHandle = this.mouseEnterHandle.bind(this);
+            this._onMouseMove = this._onMouseMove.bind(this);
+            this.mouseLeaveHandle = this.mouseLeaveHandle.bind(this);
+        }
+
+        componentWillMount() {
+            d3.queue()
+                .defer(d3.csv, './data/robbery.csv')
+                .await((error, robberies) => {
+                    this.setState({
+                        data: robberies
+                    });
+                })
+        }
+
+        mouseEnterHandle(d){
+            console.info(this);
+            if(this.state.mouseX > 0 && this.state.mouseY > 0) {
+                d3.select('.tooltip')
+                    .style("left", this.state.mouseX - 20 + "px")
+                    .style("top", this.state.mouseY - 60 + "px")
+                    .style("display", "inline-block")
+                    .html("<span>" + d.value + "</span>");
+            }
+        }
+        mouseLeaveHandle(){
+            d3.select('.tooltip')
+                .style("display", "none");
+        }
+        _onMouseMove(e) {
+            // d3.select(this)
+            //     .transition().duration(300).style("fill", 'red');
+            this.setState({ mouseX: e.screenX, mouseY: e.screenY });
+        };
+
+        render() {
+            const colors = ["#ffffd9","#edf8b1",'#cef2ba',"#c7e9b4","#7fcdbb","#41b6c4","#1d91c0",'#2973ce',"#225ea8","#253494","#081d58",'#020c26'], // alternatively colorbrewer.YlGnBu[9]
+                days = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"],
+                hours = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"],
+                gridSize = Math.floor(500 / 24),
+                margin = { top: 50, right: 0, bottom: 50, left: 30 },
+                width = 550 - margin.left - margin.right,
+                height = 300 - margin.top - margin.bottom;
+
+            if (this.state.data) {
+                let colorScale = d3.scaleQuantile()
+                    .domain([d3.min(this.state.data, function (d) { return d.value; }) - 550,  d3.max(this.state.data, function (d) { return d.value; })])
+                    .range(colors);
+                const DayLabels = days.map((day, i) => {
+                    return(
+                        <text x={0} y={i*gridSize} transform={"translate(0," + gridSize*2.4  + ")"} key={i} className={((i >= 0 && i <= 4) ? "dayLabel mono axis axis-workweek" : "dayLabel mono axis")}>{day} </text>
+                    )
+                });
+
+                const TimeLabels=hours.map((hour, i) => {
+                    return(
+                        <text x={i*gridSize} y={0} transform={"translate(" + gridSize*1.8  + ",30)"} key={i} className={((i >= 7 && i <= 16) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis")}>{hour} </text>
+                    )
+                });
+
+                const HeatMapRect = this.state.data.map( (d, i) =>
+                    {
+                        return (
+                            <g className="legend" key={i} transform={"translate(30, 35)"}>
+                                <rect x={(d.hour) * gridSize} y={(d.day-1) * gridSize} width={gridSize} height={gridSize}
+                                      style={{
+                                          fill: colorScale(d.value),
+                                          opacity: 1,
+                                          stroke: "white",
+                                          "strokeWidth": "2px"}}
+                                      rx={4} ry={4}
+                                      onMouseMove={this._onMouseMove}
+                                      onMouseEnter={() => this.mouseEnterHandle(d)}
+                                      onMouseLeave={this.mouseLeaveHandle}
+                                />
+                            </g>
+                        )
+                    }
+                );
+
+                return(
+                    <svg width = {width} height={height}>
+                        {DayLabels}
+                        {TimeLabels}
+                        {HeatMapRect}
+                    </svg>
+                )
+            } else {
+                return null;
+            }
+        }
+    }
+
+
+
+
+
+
+    class LineChart extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                data: null
+            };
+            this.drawLine = this.drawLine.bind(this);
+        }
+
+        componentWillMount() {
+            d3.queue()
+                .defer(d3.tsv, './data/robbery_month_count.tsv')
+                .await((error, robbery_month_count) => {
+                    console.info(robbery_month_count);
+                    this.setState({
+                        data: robbery_month_count
+                    });
+                    this.drawLine();
+                })
+        }
+
+        drawLine() {
+            const margin = {top: 20, right: 20, bottom: 30, left: 50},
+                width = 830 - margin.left - margin.right,
+                height = 200 - margin.top - margin.bottom;
+            const parseTime = d3.timeParse("%m.%Y"),
+                bisectDate = d3.bisector(function (d) {
+                    return d.day;
+                }).left,
+                formatTime = d3.timeFormat("%B, %Y"),
+                x = d3.scaleTime().range([0, width - 150]),
+                y = d3.scaleLinear().range([height, 0]),
+                valueline = d3.line()
+                    .x(function(d) { return x(d.day); })
+                    .y(function(d) { return y(d.value); });
+            if(this.state.data) {
+                this.state.data.forEach(function(d) {
+                    d.day = parseTime(d.day);
+                    d.value = +d.value;
+                });
+                let data = this.state.data;
+
+                x.domain(d3.extent(this.state.data, function(d) {
+                    return d.day;
+                }));
+                y.domain([2800, d3.max(this.state.data, function(d) { return d.value; })]);
+
+                let svg = d3.select(this.refs.anchor);
+
+                svg.append("path")
+                    .attr("transform", "translate(50,50)")
+                    .data([this.state.data])
+                    .attr("class", "line")
+                    .attr("d", valueline);
+
+                svg.append("g")
+                    .attr("transform", "translate(50," + 200 + ")")
+                    .call(d3.axisBottom(x));
+
+                svg.append("g")
+                    .attr("transform", "translate(50,50)")
+                    .call(d3.axisLeft(y).ticks().tickFormat(function(d) { return parseInt(d); }));
+
+                let curtain = svg.append('rect')
+                    .attr('x', -1 * (width-50))
+                    .attr('y', -1 * height)
+                    .attr('height', height)
+                    .attr('width', (width-50))
+                    .attr('transform', 'rotate(180)')
+                    .style('fill', '#ffffff');
+                curtain.transition()
+                    .duration(2000)
+                    .attr('x', -2 * (width-50));
+
+                let tip = svg.append("g")
+                    .attr("class", "focus")
+                    .style("display", "none");
+                tip.append("line")
+                    .attr("class", "x-hover-line hover-line")
+                    .attr("y1", 0)
+                    .attr("y2", 200);
+
+                tip.append('circle')
+                    .attr('r', 7.5)
+                    .style('fill', '#e0553c')
+                    .style('stroke', '#4d88d6')
+                    .style('stroke-width', '5px');
+                tip.append('g')
+                    .append('rect')
+                    .attr('rx', 6)
+                    .attr('ry', 6)
+                    .attr('y', -14)
+                    .attr('x', 13)
+                    .attr('width', 190)
+                    .attr('height', 25)
+                    .style('fill', '#66bddd')
+                    .style('opacity', '0.3')
+
+                tip.select('g').append('text')
+                    .attr('x', 17)
+                    .attr('dy', '.31em')
+                    .style('font-family', 'Verdana, Geneva, sans-serif');
+
+                function mousemove() {
+                    let x0 = x.invert(d3.mouse(this)[0]),
+                        i = bisectDate(data, x0, 1),
+                        d0 = data[i - 1],
+                        d1 = data[i],
+                        d;
+                    if(d1) {
+                        d = x0 - d0.day > d1.day - x0 ? d1 : d0;
+                    } else {
+                        d = d0
+                    }
+
+                    let transX = x(d.day) + 50;
+                    let transY = y(d.value) + 50;
+                    tip.attr("transform", "translate(" + transX +  "," + transY + ")");
+                    tip.select("text").text(function() { return formatTime(d.day) + ':' + d.value; });
+                    tip.select(".x-hover-line").attr("y2", height - y(d.value));
+                    tip.select(".y-hover-line").attr("x2", width-50 + width-50);
+                }
+
+                svg.append("rect")
+                    .attr("class", "overlay")
+                    .attr("transform","translate(50,0)")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .on("mouseover", function() { tip.style("display", 'block'); })
+                    .on("mouseout", function() { tip.style("display", "none"); })
+                    .on("mousemove", mousemove);
+            }
+        }
+
+        render() {
+            return(
+                <svg ref="anchor" width={800} height={250}/>
+            )
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    class MapComponent extends React.Component {
+        constructor() {
+            super();
+            this.state = {
+                SP_boundaries: null,
+                robberies: null,
+                mouseX: 0,
+                mouseY: 0
+            };
+        }
+
+        componentWillMount() {
+            d3.queue()
+                .defer(d3.json, './data/SP_boundaries.json')
+                .defer(d3.csv, './data/robberies.csv')
+                .await((error, SP_boundaries, robberies) => {
+                    console.info(1)
+                    this.setState({
+                        SP_boundaries: SP_boundaries,
+                        robberies: robberies
+                    });
+                })
+
+        }
+
+        componentDidUpdate() {
+            const svg = d3.select(this.refs.anchor);
+
+            const color_domain = [166, 2364, 4041, 5150, 6873, 8437, 9025, 10640, 11569, 12602, 13998, 15734];
+
+            const color = d3.scaleThreshold()
+                .domain(color_domain)
+                .range(["#ffffd9",'#b7d6a7',"#d1db9d","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0",'#2973ce',"#225ea8","#1e5599","#112f84", '#081d59','#000207']);
+
+            const projection = d3.geoAlbers()
+                .rotate([-2927, 0])
+                .center([-377.17, 59.91])
+                .parallels([59, 64])
+                .scale(35990)
+                .translate([300 / 2, 500 / 2]);
+
+            const path = d3.geoPath()
+                .projection(projection);
+
+            let crime = {};
+            this.state.robberies.forEach(function(d) {
+                crime[d.Name ] = +d.NUMPOINTS;
+            });
+            let geojson = topojson.feature(this.state.SP_boundaries, this.state.SP_boundaries.objects.SP_boundaries);
+            svg.append('g')
+                .attr("class", "map")
+                .attr('transform', 'translate(60,0)')
+                .selectAll("path")
+                .attr('class', 'map_path')
+                .data(geojson.features)
+                .enter().append("path")
+                .attr("d", path)
+                .style("fill", function(d) {
+                    return color(crime[d.properties.Name ]);
+                })
+                .style("opacity", 0.8)
+                .on("mouseover", function (d) {
+                    d3.select(this)
+                        .transition().duration(300).style("fill", 'red');
+                    d3.select('.tooltip')
+                        .style("left", d3.mouse(this)[0] - 30 + "px")
+                        .style("top", d3.mouse(this)[1] - 80 + "px")
+                        .style("display", "inline-block")
+                        .html(d.properties.Name +' район:' + "<br>"  +crime[d.properties.Name]);
+                })
+                .on('mouseout', function() {
+                    d3.select(this)
+                        .transition().duration(300).style("fill", function(d) {
+                        return color(crime[d.properties.Name ]);
+                    });
+                    d3.select('.tooltip')
+                        .style("display", "none")
+                })
+
+        }
+
+        render () {
+            const color_domain = [166, 2364, 4041, 5150, 6873, 8437, 9025, 10640, 11569, 12602, 13998, 15734];
+
+            const color = d3.scaleThreshold()
+                .domain(color_domain)
+                .range(["#ffffd9",'#b7d6a7',"#d1db9d","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0",'#2973ce',"#225ea8","#1e5599","#112f84", '#081d59','#000207']);
+
+            const { SP_boundaries, robberies} = this.state;
+
+            if (!SP_boundaries || !robberies ) {
+                return null;
+            }
+            return (
+                <svg width = {this.props.width} height={this.props.height} ref="anchor">
+                    <MapLegend color={color}/>
+                </svg>
+
+
+            );
+        }
+    }
+
+
+
+
+    ReactDOM.render(
+        <App />,
+        rootElement
+    )
+</script>
+
+</body>
+
+</html>

@@ -1,32 +1,204 @@
-.App {
+path {
+  fill: none;
+  stroke-width: 1px;
+  stroke: white;
+}
+
+.image {
+  margin-top: 20px;
+  display: inline-block;
+  width: 110px;
+  vertical-align: middle;
+}
+.title {
+  font-family: "Arial Black", Gadget, sans-serif;
+  display:table-cell;
+  vertical-align:top;
+  margin-left: 20px;
+}
+.spans {
+  display:inline-block;
+  vertical-align: top;
+  margin-top: 17px;
+  margin-left: 10px;
+}
+img {
+  margin-right: 20px;
+  width: 110px;
+}
+
+.tooltip {
+  position:absolute;
+  min-width: 80px;
+  background: none repeat scroll 0 0 #b3eaf3;
+  padding: 5px;
+  border-radius: 10px;
   text-align: center;
+  font-size: 12px;
+  font-family: Verdana, Geneva, sans-serif;
+  background: #deefee;
+  left: 50%;
+  top: 50%;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 40vmin;
+#id_map {
+  width: 45%;
+  float: left;
+  clear: right;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.mapHelp {
+  font-size: 12px;
+  color: gray;
+  display: block;
+  margin-bottom: 20px;
+  margin-left: 30px;
 }
 
-.App-link {
-  color: #61dafb;
+#id_barChart {
+  width: 45%;
+  float: right;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+#heatMap {
+  width: 45%;
+  float: right;
 }
+
+#lineChart {
+  width: 45%;
+  float: left;
+}
+
+rect.bordered {
+  stroke: white;
+  stroke-width:2px;
+}
+text.mono {
+  font-size: 9pt;
+  font-family: Consolas, courier;
+  fill: #aaa;
+}
+text.axis-workweek {
+  fill: #000;
+}
+text.axis-worktime {
+  fill: #000;
+}
+
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
+.domain {
+  stroke:black;
+}
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+.tip circle {
+  fill: #66bddd;
+  stroke: #4d88d6;
+  stroke-width: 5px;
+}
+
+.hover-line {
+  stroke: #5682d3;
+  stroke-width: 0.5px;
+  stroke-dasharray: 3,3;
+}
+#line_graph_div {
+  display:block;
+  width: 100%;
+  height:200px;
+  margin-top:0px;
+}
+.line_graph_wrapper {
+  float: left!important;
+  /*display: block;*/
+  margin-top: 30px;
+  width: 47%;
+  height: 300px;
+  left: 0px;
+  clear: left;
+}
+.lg_span {
+  width: 530px;
+  margin-left: 60px;
+  height: 30px;
+}
+/*page*/
+.image {
+  margin-top: 20px;
+  display: inline-block;
+  width: 110px;
+  vertical-align: middle;
+}
+.title {
+  font-family: "Arial Black", Gadget, sans-serif;
+  display:table-cell;
+  vertical-align:top;
+  margin-left: 20px;
+}
+.spans {
+  display:inline-block;
+  vertical-align: top;
+  margin-top: 17px;
+  margin-left: 10px;
+}
+img {
+  margin-right: 20px;
+}
+.help {
+  font-size: 12px;
+  color: gray;
+  display: block;
+  margin-bottom: 20px;
+  margin-left: 30px;
+}
+.button {
+  display: inline-block;
+  vertical-align: center;
+  margin-left: 30px;
+  margin-top: 18px;
+}
+.select_option {
+  -webkit-appearance: none;
+}
+select {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 3px;
+}
+form p {
+  display:block;
+  -webkit-margin-before: 0;
+  -webkit-margin-after: 0;
+  margin-bottom: 3px;
+}
+.button_cluster {
+  display: inline-block;
+  margin-left: 25px;
+}
+input[type='button'] {
+  -webkit-appearance: none;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  color: black;
+  padding: 5px;
+  padding-left: 7px;
+  padding-right: 7px;
+  text-decoration: none;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+.horizontal_bc_svg .tick line {
+  stroke-dasharray: 3.3;
+  stroke-width: 0.3px;
+  stroke: lightblue;
+}
+

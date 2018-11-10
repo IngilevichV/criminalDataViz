@@ -10,6 +10,7 @@
     "react-addons-transition-group": "^15.6.2",
     "react-dom": "^16.6.1",
     "react-scripts": "2.1.1",
+    "react-transition-group": "^2.5.0",
     "topojson": "^1.6.27"
   },
   "scripts": {
